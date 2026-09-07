@@ -1,0 +1,70 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Project model — userId is a plain string (no FK to User)
+// so anonymous uploads work without requiring auth
+model Project {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String   // stores "anonymous" for unauthenticated users
+  files     File[]
+  subtitles Subtitle[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// File model
+model File {
+  id           String   @id @default(cuid())
+  filename     String
+  originalName String
+  size         Int
+  mimeType     String
+  duration     Float?
+  path         String
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  status       String   @default("uploaded") // uploaded, processing, done, failed
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  jobs         TranscriptionJob[]
+}
+
+// Transcription Job model
+model TranscriptionJob {
+  id         String   @id @default(cuid())
+  fileId     String
+  file       File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  status     String   @default("pending") // pending, processing, completed, failed
+  error      String?
+  language   String?
+  duration   Float?
+  result     String?  // JSON of transcript
+  srtContent String?  // Generated SRT content
+  srtPath    String?  // Path to SRT file
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  subtitles  Subtitle[]
+}
+
+// Subtitle model
+model Subtitle {
+  id        String           @id @default(cuid())
+  jobId     String
+  job       TranscriptionJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  index     Int
+  startTime Float
+  endTime   Float
+  text      String
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}

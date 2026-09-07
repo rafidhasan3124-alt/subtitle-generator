@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Subtitle Generator — Complete Beginner & Video Editor Manual</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 16mm 14mm 16mm 14mm;
+      @bottom-right {
+        content: counter(page);
+        font-family: 'Inter', sans-serif;
+        font-size: 8.5pt;
+        color: #64748b;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: #1e293b;
+      background-color: #ffffff;
+      line-height: 1.55;
+      font-size: 9.5pt;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    /* Cover Header */
+    .cover-header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+      color: #ffffff;
+      padding: 30px 24px;
+      border-radius: 14px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cover-header::after {
+      content: "";
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 280px;
+      height: 280px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .badge-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(4px);
+      color: #e0e7ff;
+      font-size: 8pt;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .badge.accent {
+      background: rgba(99, 102, 241, 0.4);
+      color: #ffffff;
+      border-color: #818cf8;
+    }
+
+    .cover-title {
+      font-size: 24pt;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 6px;
+      letter-spacing: -0.5px;
+    }
+
+    .cover-subtitle {
+      font-size: 11.5pt;
+      color: #cbd5e1;
+      font-weight: 400;
+      margin-bottom: 16px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      padding-top: 12px;
+      font-size: 8pt;
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .meta-label {
+      color: #94a3b8;
+      font-size: 7pt;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+
+    .meta-value {
+      font-weight: 600;
+      color: #f8fafc;
+    }
+
+    /* Section Styling */
+    h2 {
+      font-size: 13pt;
+      font-weight: 700;
+      color: #0f172a;
+      border-bottom: 2px solid #6366f1;
+      padding-bottom: 4px;
+      margin-top: 20px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      page-break-after: avoid;
+    }
+
+    h2 .num {
+      background: #4f46e5;
+      color: white;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9pt;
+      font-weight: 700;
+    }
+
+    h3 {
+      font-size: 11pt;
+      font-weight: 600;
+      color: #1e293b;
+      margin-top: 14px;
+      margin-bottom: 6px;
+      page-break-after: avoid;
+    }
+
+    p {
+      margin-bottom: 8px;
+      color: #334155;
+      text-align: justify;
+    }
+
+    /* Grid Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    /* Cards */
+    .card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      page-break-inside: avoid;
+    }
+
+    .card.highlight {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+
+    .card.info {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+    }
+
+    .card.warning {
+      background: #fffbeb;
+      border-color: #fde68a;
+    }
+
+    .card-title {
+      font-weight: 700;
+      font-size: 10pt;
+      color: #0f172a;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Flow Step */
+    .flow-container {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 14px 0;
+      page-break-inside: avoid;
+    }
+
+    .flow-step {
+      flex: 1;
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      border-top: 4px solid #6366f1;
+      border-radius: 8px;
+      padding: 10px 8px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    }
+
+    .flow-step .step-num {
+      font-size: 7.5pt;
+      font-weight: 700;
+      color: #6366f1;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+
+    .flow-step .step-title {
+      font-weight: 700;
+      font-size: 9pt;
+      color: #0f172a;
+      margin-bottom: 3px;
+    }
+
+    .flow-step .step-desc {
+      font-size: 7.5pt;
+      color: #64748b;
+      line-height: 1.3;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 8.5pt;
+      page-break-inside: avoid;
+    }
+
+    th {
+      background: #1e293b;
+      color: #ffffff;
+      text-align: left;
+      padding: 7px 10px;
+      font-weight: 600;
+      font-size: 8pt;
+    }
+
+    td {
+      padding: 7px 10px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #334155;
+    }
+
+    tr:nth-child(even) {
+      background: #f8fafc;
+    }
+
+    /* Code & Command Blocks */
+    code {
+      font-family: 'Fira Code', monospace;
+      background: #f1f5f9;
+      color: #475569;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 8pt;
+    }
+
+    pre {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 12px;
+      border-radius: 8px;
+      font-family: 'Fira Code', monospace;
+      font-size: 8pt;
+      line-height: 1.45;
+      overflow-x: auto;
+      margin: 10px 0;
+      page-break-inside: avoid;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+
+    /* Callouts */
+    .callout {
+      border-left: 4px solid #6366f1;
+      background: #f5f3ff;
+      padding: 10px 14px;
+      border-radius: 0 8px 8px 0;
+      margin: 12px 0;
+      page-break-inside: avoid;
+    }
+
+    .callout.tip {
+      border-left-color: #10b981;
+      background: #ecfdf5;
+    }
+
+    .callout.warning {
+      border-left-color: #f59e0b;
+      background: #fffbeb;
+    }
+
+    .callout-title {
+      font-weight: 700;
+      font-size: 9pt;
+      margin-bottom: 3px;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Lists */
+    ul, ol {
+      margin-left: 18px;
+      margin-bottom: 10px;
+      color: #334155;
+    }
+
+    li {
+      margin-bottom: 3px;
+    }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    .step-box {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-left: 4px solid #3b82f6;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      page-break-inside: avoid;
+    }
+
+    .step-box-title {
+      font-weight: 700;
+      color: #1e3a8a;
+      font-size: 9.5pt;
+      margin-bottom: 4px;
+    }
+
+    /* Footer */
+    .manual-footer {
+      margin-top: 25px;
+      border-top: 1px solid #cbd5e1;
+      padding-top: 10px;
+      text-align: center;
+      font-size: 8pt;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- COVER HEADER -->
+  <div class="cover-header">
+    <div class="badge-bar">
+      <span class="badge accent">AI Subtitle Generator v1.0</span>
+      <span class="badge">Non-Technical User Manual</span>
+      <span class="badge">Bengali & English AI Speech Recognition</span>
+      <span class="badge">1-Click Launch Guide</span>
+    </div>
+    <h1 class="cover-title">AI Subtitle & SRT Generator</h1>
+    <div class="cover-subtitle">Complete Step-by-Step User & Installation Guide for Video Editors & Content Creators</div>
+    
+    <div class="meta-grid">
+      <div class="meta-item">
+        <span class="meta-label">Author</span>
+        <span class="meta-value">DeepMind AI Team</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Target Audience</span>
+        <span class="meta-value">Video Editors, Creators, Educators</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Technical Level</span>
+        <span class="meta-value">Beginner Friendly (Zero Coding)</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Release Date</span>
+        <span class="meta-value">September 2026</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 1: WELCOME & OVERVIEW -->
+  <h2><span class="num">1</span> Welcome! What Does This Tool Do?</h2>
+  <p>
+    Welcome to <strong>AI Subtitle & SRT Generator</strong>! If you edit videos, you know how painful and time-consuming it is to manually listen to speech and type out subtitles line-by-line with timestamps. 
+  </p>
+  <p>
+    This software uses cutting-edge Artificial Intelligence (OpenAI Whisper) to automatically listen to your video or audio files in <strong>Bengali (বাংলা)</strong>, <strong>English</strong>, or <strong>Banglish (spoken dialect)</strong> and produce a ready-to-use <code>.srt</code> subtitle file within minutes!
+  </p>
+
+  <div class="grid-3">
+    <div class="card highlight">
+      <div class="card-title">⏱️ Saves Hours of Work</div>
+      <p style="font-size:7.5pt">What used to take 3 to 4 hours of manual typing now takes only 2 minutes automatically!</p>
+    </div>
+    <div class="card info">
+      <div class="card-title">🇧🇩 Perfect Bengali & Banglish</div>
+      <p style="font-size:7.5pt">Designed specifically to understand Bengali accents, mixed English terms, and local vocabulary.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">🖱️ Simple 1-Click Launch</div>
+      <p style="font-size:7.5pt">No need to type code every time! Once set up, double-click a shortcut file to start editing.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 2: ONE-TIME SETUP FOR BEGINNERS -->
+  <h2><span class="num">2</span> One-Time Setup Guide (Step-by-Step for Beginners)</h2>
+  <p>Before running the application for the very first time, you need 3 free helper tools installed on your computer. You only need to do this <strong>once</strong>!</p>
+
+  <div class="step-box">
+    <div class="step-box-title">Step A: Install Node.js (Required to run the Web App)</div>
+    <ol>
+      <li>Go to <a href="https://nodejs.org/" target="_blank">https://nodejs.org/</a> in your browser.</li>
+      <li>Download the <strong>"LTS (Recommended For Most Users)"</strong> installer.</li>
+      <li>Double-click the downloaded file and click <strong>Next -> Next -> Finish</strong> (keep all default settings).</li>
+    </ol>
+  </div>
+
+  <div class="step-box">
+    <div class="step-box-title">Step B: Install Python (Required for the AI Speech Engine)</div>
+    <ol>
+      <li>Go to <a href="https://www.python.org/downloads/" target="_blank">https://www.python.org/downloads/</a>.</li>
+      <li>Click the big yellow <strong>"Download Python"</strong> button.</li>
+      <li><strong>CRITICAL STEP:</strong> When opening the installer, check the box that says <strong>"Add python.exe to PATH"</strong> at the bottom before clicking Install Now!</li>
+    </ol>
+  </div>
+
+  <div class="step-box">
+    <div class="step-box-title">Step C: Install FFmpeg (Required for Audio Extraction)</div>
+    <ul>
+      <li><strong>On Windows:</strong> Open Command Prompt and type: <code>winget install FFmpeg</code> and press Enter.</li>
+      <li><strong>On Mac:</strong> Open Terminal and type: <code>brew install ffmpeg</code> and press Enter.</li>
+      <li><strong>On Ubuntu/Linux:</strong> Open Terminal and type: <code>sudo apt update && sudo apt install -y ffmpeg</code>.</li>
+    </ul>
+  </div>
+
+  <div class="step-box">
+    <div class="step-box-title">Step D: Initialize the Project (First Time Only)</div>
+    <p>Open your Terminal or Command Prompt in the project folder and copy-paste these 2 simple commands line-by-line:</p>
+    <pre><code># 1. Install all necessary packages (Takes 1-2 minutes)
+npm install
+
+# 2. Prepare the local database
+npm run db:setup</code></pre>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- SECTION 3: 1-CLICK LAUNCHING -->
+  <h2><span class="num">3</span> How to Launch the App in 1-Click (No Code Needed!)</h2>
+  <p>After completing the one-time setup, you <strong>never need to open the command line again</strong>! Use our 1-click launcher files:</p>
+
+  <div class="grid-2">
+    <div class="card highlight">
+      <div class="card-title">🪟 Windows Users</div>
+      <p>Double-click the <code>start_app.bat</code> file inside the project folder.</p>
+      <p style="font-size:7.5pt; color:#475569; margin-top:4px">It will automatically open your web browser at <code>http://localhost:3000</code>!</p>
+    </div>
+    <div class="card info">
+      <div class="card-title">🍎 Mac / Linux Users</div>
+      <p>Double-click the <code>start_app.sh</code> script inside the project folder.</p>
+      <p style="font-size:7.5pt; color:#475569; margin-top:4px">It will launch the app and open the page automatically.</p>
+    </div>
+  </div>
+
+  <div class="callout tip">
+    <div class="callout-title">💡 Important Desktop Shortcut Tip:</div>
+    Right-click <code>start_app.bat</code> (or <code>start_app.sh</code>) and select <strong>Send to -> Desktop (Create shortcut)</strong>. Now you can launch your AI Subtitle Generator straight from your Desktop anytime!
+  </div>
+
+  <!-- SECTION 4: VISUAL USER GUIDE -->
+  <h2><span class="num">4</span> Complete Visual User Guide (Click-by-Click)</h2>
+
+  <div class="flow-container">
+    <div class="flow-step">
+      <div class="step-num">Step 1</div>
+      <div class="step-title">Upload Video</div>
+      <div class="step-desc">Drag & drop your video or audio file onto the screen.</div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">Step 2</div>
+      <div class="step-title">Select Language</div>
+      <div class="step-desc">Choose Bengali, English, or Auto-detect.</div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">Step 3</div>
+      <div class="step-title">Custom Vocabulary</div>
+      <div class="step-desc">Type important words to ensure accurate spelling.</div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">Step 4</div>
+      <div class="step-title">Generate & Export</div>
+      <div class="step-desc">Review in editor and download your `.srt` file.</div>
+    </div>
+  </div>
+
+  <h3>Step 1: Uploading Your Video or Audio File</h3>
+  <ul>
+    <li>Click anywhere on the big dashed box in the middle of the screen or drag your video file directly from your folder into the box.</li>
+    <li><strong>Supported formats:</strong> MP4, MP3, WAV, M4A, MOV, MKV, WebM.</li>
+    <li><strong>File size limit:</strong> Up to 500 MB.</li>
+  </ul>
+
+  <h3>Step 2: Choosing Language & Model Size</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Setting</th>
+        <th>What to Select</th>
+        <th>When to Use It</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Language</strong></td>
+        <td><code>🇧🇩 বাংলা (Bengali)</code></td>
+        <td>Select this for Bengali speech or mixed Banglish dialogue.</td>
+      </tr>
+      <tr>
+        <td><strong>Language</strong></td>
+        <td><code>🇬🇧 English</code></td>
+        <td>Select this for English videos.</td>
+      </tr>
+      <tr>
+        <td><strong>Model Size</strong></td>
+        <td><code>Small (Default)</code></td>
+        <td>Best balance of high speed and strong accuracy for normal laptops.</td>
+      </tr>
+      <tr>
+        <td><strong>Model Size</strong></td>
+        <td><code>Medium / Large</code></td>
+        <td>Use on powerful computers for maximum precision on fast or noisy audio.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Step 3: Mastering "Custom Vocabulary" for Banglish & Technical Words</h3>
+  <p>
+    If your video contains specific technical terms, brand names, or mixed Banglish words (e.g. <em>"Adobe Premiere", "বিটিসিএল", "লাইভ স্ট্রিমিং", "ইউজার ম্যানুয়াল"</em>), type them into the <strong>Custom Vocabulary / Prompt</strong> text box separated by commas!
+  </p>
+
+  <div class="callout tip">
+    <div class="callout-title">📝 Real Example of Custom Vocabulary:</div>
+    <code>ভিডিও এডিটিং, সাবটাইটেল, টাইমস্ট্যাম্প, Premiere Pro, CapCut, ইউজার ম্যানুয়াল</code><br>
+    <em>By providing these hints, the AI speech model will spell these exact words flawlessly!</em>
+  </div>
+
+  <h3>Step 4: Live Editing & Adjusting Timestamps</h3>
+  <p>Once processing finishes, a live preview table appears on your screen:</p>
+  <ul>
+    <li><strong>Edit Words:</strong> Click any text box to fix a typo or reword a line.</li>
+    <li><strong>Edit Timestamps:</strong> If a subtitle appears slightly too early or late, adjust the start time (e.g. <code>00:00:02,100</code>) or end time directly in the box.</li>
+  </ul>
+
+  <h3>Step 5: Downloading Subtitles for Your Video Editor</h3>
+  <ul>
+    <li>Click <strong>"Download SRT"</strong>: Saves a standard <code>.srt</code> file to your Downloads folder.</li>
+    <li>Click <strong>"Download VTT"</strong>: Saves a <code>.vtt</code> file (used for web players).</li>
+    <li>Click <strong>"Copy SRT"</strong>: Copies all formatted subtitles to your clipboard so you can paste anywhere.</li>
+  </ul>
+
+  <div class="page-break"></div>
+
+  <!-- SECTION 5: VIDEO EDITOR IMPORT GUIDES -->
+  <h2><span class="num">5</span> How to Import Subtitles into Video Editors</h2>
+  <p>Follow these quick guides to bring your downloaded <code>.srt</code> file into your preferred video editing software:</p>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🎬 Adobe Premiere Pro</div>
+      <ol style="font-size:8pt; margin-left:14px">
+        <li>Open your Premiere project.</li>
+        <li>Go to <strong>File -> Import</strong> and select your downloaded <code>.srt</code> file.</li>
+        <li>Drag the imported SRT file from the Project panel directly onto your timeline as a Caption track.</li>
+        <li>Style your subtitle font, color, and size in the <em>Essential Graphics / Captions</em> panel!</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎨 DaVinci Resolve</div>
+      <ol style="font-size:8pt; margin-left:14px">
+        <li>Open DaVinci Resolve and go to the <strong>Edit Page</strong>.</li>
+        <li>Right-click in the Media Pool and select <strong>Import Media...</strong> -> Pick your <code>.srt</code> file.</li>
+        <li>Drag the subtitle onto your timeline. It will automatically create a dedicated <em>Subtitle Track</em>.</li>
+        <li>Customize font and outline in the <em>Inspector -> Caption</em> tab.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📱 CapCut (Desktop / Mobile)</div>
+      <ol style="font-size:8pt; margin-left:14px">
+        <li>Open your video in CapCut.</li>
+        <li>Click <strong>Text</strong> on the top menu -> Click <strong>Local Captions / Import SRT</strong>.</li>
+        <li>Select your downloaded <code>.srt</code> file.</li>
+        <li>CapCut will automatically align the subtitles with your video timeline!</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <div class="card-title">▶️ YouTube Studio</div>
+      <ol style="font-size:8pt; margin-left:14px">
+        <li>Go to YouTube Studio and select your video.</li>
+        <li>Click <strong>Subtitles</strong> on the left menu.</li>
+        <li>Click <strong>Add / Edit</strong> -> Select <strong>Upload file</strong> -> Choose <strong>With timing</strong>.</li>
+        <li>Select your <code>.srt</code> file and click <strong>Publish</strong>!</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- SECTION 6: TROUBLESHOOTING FOR NON-TECHIES -->
+  <h2><span class="num">6</span> Troubleshooting & FAQs (For Non-Techies)</h2>
+
+  <div class="callout warning">
+    <div class="callout-title">❓ Question 1: I double-clicked start_app.bat but the browser says "This site can't be reached"?</div>
+    <strong>Answer:</strong> Wait 5 to 10 seconds for the black server window to finish initializing. Do NOT close the black command window — it must stay open while you use the application!
+  </div>
+
+  <div class="callout warning">
+    <div class="callout-title">❓ Question 2: It says "FFmpeg not found"?</div>
+    <strong>Answer:</strong> FFmpeg is required to extract audio from video files. Open Command Prompt on Windows and type <code>winget install FFmpeg</code>, then restart your computer.
+  </div>
+
+  <div class="callout info">
+    <div class="callout-title">❓ Question 3: Some Banglish words are spelled wrong?</div>
+    <strong>Answer:</strong> Simply type those tricky Banglish words into the <strong>Custom Vocabulary Prompt</strong> box before clicking Generate! The AI will automatically adopt your exact spellings.
+  </div>
+
+  <!-- FOOTER -->
+  <div class="manual-footer">
+    <p>AI Subtitle Generator v1.0.0 — Designed by DeepMind AI Team for Video Editing Teams</p>
+    <p>© 2026 All Rights Reserved. Non-Technical User Documentation.</p>
+  </div>
+
+</body>
+</html>
