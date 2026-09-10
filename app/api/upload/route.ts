@@ -81,10 +81,17 @@ export async function POST(req: NextRequest) {
     }
 
     // MIME type check (secondary)
-    if (file.type && !ALLOWED_TYPES.has(file.type)) {
-      return NextResponse.json(
-        { error: `Unexpected content type "${file.type}" for extension "${ext}". Please try again.` },
-        { status: 400 }
+    // Some browsers/files report a generic type like application/octet-stream or a
+    // non-standard MIME even when the file extension is valid. We still accept the
+    // upload and normalize the MIME type from the extension instead of rejecting it.
+    const declaredMimeType = file.type || '';
+    const mimeType = ALLOWED_TYPES.has(declaredMimeType)
+      ? declaredMimeType
+      : (MIME_BY_EXT[ext] || 'application/octet-stream');
+
+    if (declaredMimeType && !ALLOWED_TYPES.has(declaredMimeType) && declaredMimeType !== 'application/octet-stream') {
+      console.warn(
+        `[Upload] Non-standard MIME type for ${file.name}: "${declaredMimeType}". Falling back to extension-based MIME "${mimeType}".`
       );
     }
 
@@ -96,11 +103,6 @@ export async function POST(req: NextRequest) {
     filePath = path.join(uploadDir, safeFileName);
     const buffer = Buffer.from(await file.arrayBuffer());
     await fs.writeFile(filePath, buffer);
-
-    // Correct MIME type
-    const mimeType = ALLOWED_TYPES.has(file.type)
-      ? file.type
-      : (MIME_BY_EXT[safeExt] || 'application/octet-stream');
 
     let projectId = 'default';
 
