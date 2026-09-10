@@ -232,7 +232,7 @@ function ProviderCard({
         <p className="text-xs mt-1 leading-relaxed" style={{ color: '#475569' }}>{provider.description}</p>
         {!provider.configured && (
           <p className="text-[10px] mt-1.5 font-semibold" style={{ color: '#94a3b8' }}>
-            Add <code className="px-1 py-0.5 rounded" style={{ background: '#0f172a', color: '#818cf8' }}>{provider.envKey}</code> to .env.local •{' '}
+            Add <code className="px-1 py-0.5 rounded" style={{ background: '#0f172a', color: '#818cf8' }}>{provider.envKey}</code> in Netlify Environment Variables (or .env.local) •{' '}
             <a href={provider.signupUrl} target="_blank" rel="noopener noreferrer"
               className="underline hover:text-indigo-400 transition-colors" style={{ color: '#818cf8' }}>
               Get free API key →
@@ -424,7 +424,7 @@ export default function Dashboard() {
       if (res.status === 402 || data.error === 'TOKEN_NOT_CONFIGURED') {
         setIsProcessing(false);
         showError(
-          `🔑 ${data.providerName || 'Selected provider'} API key is not added yet.\n\nTo use this provider, add ${data.envKey || 'the API key'} to your .env.local file and restart the app.\n\nGet a free key at: ${data.signupUrl || 'the provider website'}.\n\nYou can use Hugging Face for free — it's already configured ✅`,
+          `🔑 ${data.providerName || 'Selected provider'} API key is not added yet.\n\nTo use this provider, add ${data.envKey || 'the API key'} in your Netlify Environment Variables (or .env.local for local development).\n\nGet a free key at: ${data.signupUrl || 'the provider website'}.\n\nYou can use Hugging Face for free — it's already configured ✅`,
           'warning'
         );
         return;

@@ -8,7 +8,8 @@ import { OpenAIProvider } from './openai';
 // Checks if a token is a real value or a placeholder
 function isPlaceholder(token: string | undefined, prefix = ''): boolean {
   if (!token) return true;
-  if (token.startsWith('xxx')) return true;
+  const t = token.trim().toLowerCase();
+  if (t === '' || t.startsWith('xxx') || t.startsWith('your_') || t.startsWith('your-') || t.includes('_here') || t.includes('placeholder')) return true;
   if (token === `${prefix}xxxxxxxxxxxxxxxxxxxxxxxxxxxxx`) return true;
   if (token === 'sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxx') return true;
   return false;

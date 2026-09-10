@@ -7,17 +7,26 @@ let _redis: Redis | null = null;
 let _queue: Queue | null = null;
 let _queueEvents: QueueEvents | null = null;
 
+export function isRedisConfigured(): boolean {
+  // If explicitly disabled or on Netlify/Serverless without external Redis URL
+  if (process.env.DISABLE_REDIS === 'true') return false;
+  if (!process.env.REDIS_URL && (process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.VERCEL)) {
+    return false;
+  }
+  return true;
+}
+
 function getRedis(): Redis {
   if (!_redis) {
     const url = process.env.REDIS_URL || 'redis://localhost:6379';
     _redis = new Redis(url, {
-      maxRetriesPerRequest: 3,
+      maxRetriesPerRequest: 1,
+      connectTimeout: 2000,
       enableReadyCheck: true,
       lazyConnect: true,
       enableOfflineQueue: false,
     });
     _redis.on('error', (err) => {
-      // Log internally but never expose connection details to clients
       console.error('[Redis] Connection error:', err.message);
     });
   }
@@ -66,9 +75,8 @@ export async function addTranscriptionJob(data: TranscriptionJobData) {
     const queue = getTranscriptionQueue();
     return await queue.add('transcribe', data, { jobId: data.jobId });
   } catch (err: unknown) {
-    // Wrap Redis/BullMQ errors so the caller gets a clean message
     const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes('ECONNREFUSED') || msg.includes('connect')) {
+    if (msg.includes('ECONNREFUSED') || msg.includes('connect') || msg.includes('timeout')) {
       throw new Error('Queue service is unavailable. Please ensure Redis is running and try again.');
     }
     throw err;
@@ -77,6 +85,7 @@ export async function addTranscriptionJob(data: TranscriptionJobData) {
 
 export async function getJobStatus(jobId: string) {
   try {
+    if (!isRedisConfigured()) return null;
     const queue = getTranscriptionQueue();
     const job = await queue.getJob(jobId);
     if (!job) return null;

@@ -1,6 +1,9 @@
 // app/api/download/[jobId]/route.ts
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { prisma, ensureDbInitialized } from '@/lib/db/prisma';
+import { memoryStore } from '@/lib/transcription/store';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   _req: Request,
@@ -13,10 +16,26 @@ export async function GET(
       return NextResponse.json({ error: 'Job ID is required' }, { status: 400 });
     }
 
-    const job = await prisma.transcriptionJob.findUnique({
-      where: { id: jobId },
-      include: { file: true },
-    });
+    let job: any = null;
+    try {
+      await ensureDbInitialized();
+      job = await prisma.transcriptionJob.findUnique({
+        where: { id: jobId },
+        include: { file: true },
+      });
+    } catch {}
+
+    if (!job) {
+      const memJob = memoryStore.getJob(jobId);
+      if (memJob) {
+        job = {
+          id:         memJob.id,
+          status:     memJob.status,
+          srtContent: memJob.srtContent,
+          file:       memJob.file ? { originalName: memJob.file.name } : null,
+        };
+      }
+    }
 
     if (!job) {
       return NextResponse.json({ error: 'Job not found' }, { status: 404 });
@@ -38,18 +57,14 @@ export async function GET(
 
     // Build a safe ASCII filename + RFC 5987 UTF-8 encoded version for Unicode support
     const originalName = job.file?.originalName || 'subtitles';
-    const baseName   = originalName.replace(/\.[^.]+$/, '');
-    const fileName   = `${baseName}-subtitles.srt`;
-    // ASCII-safe fallback (replace non-ASCII with underscores)
-    const asciiName  = fileName.replace(/[^\x20-\x7E]/g, '_');
-    // RFC 5987 UTF-8 encoded filename for browsers that support it (fixes Bengali names)
-    const encodedName = encodeURIComponent(fileName);
+    const baseName     = originalName.replace(/\.[^.]+$/, '');
+    const fileName     = `${baseName}-subtitles.srt`;
+    const asciiName    = fileName.replace(/[^\x20-\x7E]/g, '_');
+    const encodedName  = encodeURIComponent(fileName);
 
     return new NextResponse(job.srtContent, {
       headers: {
-        // Correct MIME type for SRT files
         'Content-Type': 'application/x-subrip; charset=utf-8',
-        // Dual filename: ASCII fallback + UTF-8 encoded for modern browsers (RFC 6266)
         'Content-Disposition': `attachment; filename="${asciiName}"; filename*=UTF-8''${encodedName}`,
         'Content-Length': Buffer.byteLength(job.srtContent, 'utf8').toString(),
       },

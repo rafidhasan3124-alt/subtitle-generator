@@ -11,6 +11,17 @@
 - 📄 **SRT Export** — Industry-standard format, যেকোনো video editor-এ কাজ করে
 - ⚡ **Fallback Providers** — AssemblyAI, Deepgram support
 - 🗄️ **SQLite Database** — Redis server ছাড়াও চলবে (in-memory fallback)
+- ☁️ **Netlify & Vercel Ready** — Serverless in-process transcription, zero Redis/worker dependency needed on cloud deployment!
+
+---
+
+## ☁️ Deploy to Netlify (১-ক্লিকে ডিপ্লয়)
+
+See full details in [NETLIFY_DEPLOYMENT_GUIDE.md](./NETLIFY_DEPLOYMENT_GUIDE.md).
+
+1. আপনার GitHub repo Netlify-তে connect করুন।
+2. **Environment Variables**-এ `HUGGINGFACE_TOKEN` যোগ করুন।
+3. **Deploy!** Netlify automatically `prisma generate && next build` চালাবে এবং serverless mode-এ app লাইভ করবে।
 
 ---
 

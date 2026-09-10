@@ -53,15 +53,9 @@ export class AssemblyAIProvider implements STTProvider {
     audioUrl: string,
     options?: TranscribeOptions
   ): Promise<string> {
-    const response = await fetch(`${this.apiUrl}/transcript`, {
-      method: 'POST',
-      headers: {
-        'Authorization': this.apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+      const isAuto = !options?.language || options.language === 'auto';
+      const requestPayload: Record<string, any> = {
         audio_url: audioUrl,
-        language_code: options?.language || 'bn',
         punctuate: options?.punctuation !== false,
         format_text: options?.formatText !== false,
         speaker_labels: false,
@@ -70,8 +64,22 @@ export class AssemblyAIProvider implements STTProvider {
         confidence_threshold: 0.6,
         word_boost: ['বাংলা', 'Bangla', 'ঢাকা', 'Dhaka'],
         boost_param: 'high',
-      }),
-    });
+      };
+
+      if (isAuto) {
+        requestPayload.language_detection = true;
+      } else {
+        requestPayload.language_code = options.language;
+      }
+
+      const response = await fetch(`${this.apiUrl}/transcript`, {
+        method: 'POST',
+        headers: {
+          'Authorization': this.apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestPayload),
+      });
 
     if (!response.ok) {
       throw new Error(`Start transcription failed: ${response.status}`);

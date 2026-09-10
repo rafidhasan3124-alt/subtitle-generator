@@ -1,26 +1,31 @@
 // app/api/subtitles/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
-import { addTranscriptionJob } from '@/lib/queue/redis-queue';
+import { prisma, ensureDbInitialized } from '@/lib/db/prisma';
+import { addTranscriptionJob, isRedisConfigured } from '@/lib/queue/redis-queue';
 import { getProviderStatuses } from '@/lib/cloud-ai/factory';
+import { executeDirectTranscription } from '@/lib/transcription/direct';
+import { memoryStore } from '@/lib/transcription/store';
+import { v4 as uuidv4 } from 'uuid';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const {
       fileId,
-      language    = 'auto',
-      model       = 'small',
-      prompt      = '',
-      aiProvider  = process.env.AI_PROVIDER || 'huggingface',
+      language   = 'auto',
+      model      = 'small',
+      prompt     = '',
+      aiProvider = process.env.AI_PROVIDER || 'huggingface',
     } = body;
 
     if (!fileId) {
       return NextResponse.json({ error: 'File ID is required' }, { status: 400 });
     }
 
-    // Validate provider token BEFORE touching the DB
-    const statuses      = getProviderStatuses();
+    // Validate provider token BEFORE processing
+    const statuses       = getProviderStatuses();
     const providerStatus = statuses.find((s) => s.id === aiProvider);
 
     if (!providerStatus) {
@@ -38,17 +43,36 @@ export async function POST(req: NextRequest) {
           providerName: providerStatus.name,
           envKey:       providerStatus.envKey,
           signupUrl:    providerStatus.signupUrl,
-          message:      `${providerStatus.name} API key is not set. Add ${providerStatus.envKey} to your .env.local file.`,
+          message:      `${providerStatus.name} API key is not set. Add ${providerStatus.envKey} to your Netlify Environment Variables (or .env.local for local development).`,
         },
         { status: 402 }
       );
     }
 
-    // Fetch file record
-    const file = await prisma.file.findUnique({
-      where:   { id: fileId },
-      include: { project: true },
-    });
+    // Fetch file record from DB or memory store
+    let file: any = null;
+    try {
+      await ensureDbInitialized();
+      file = await prisma.file.findUnique({
+        where:   { id: fileId },
+        include: { project: true },
+      });
+    } catch {}
+
+    if (!file) {
+      // Check memory store
+      const memFile = memoryStore.getFile(fileId);
+      if (memFile) {
+        file = {
+          id:        memFile.id,
+          path:      memFile.path,
+          name:      memFile.originalName,
+          status:    memFile.status,
+          projectId: memFile.projectId,
+          project:   { userId: 'anonymous' },
+        };
+      }
+    }
 
     if (!file) {
       return NextResponse.json(
@@ -57,24 +81,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Guard: already processing — return existing job
-    if (file.status === 'processing') {
-      const existingJob = await prisma.transcriptionJob.findFirst({
-        where:   { fileId: file.id, status: { in: ['pending', 'processing'] } },
-        orderBy: { createdAt: 'desc' },
-      });
-      if (existingJob) {
-        return NextResponse.json({
-          subtitleId: existingJob.id,
-          id:         existingJob.id,
-          status:     existingJob.status,
-          message:    'Already processing.',
-        });
-      }
-    }
-
-    // Guard: already completed — return cached result
-    if (file.status === 'done') {
+    // Check for existing completed job
+    try {
+      await ensureDbInitialized();
       const existingJob = await prisma.transcriptionJob.findFirst({
         where:   { fileId: file.id, status: 'completed' },
         include: { subtitles: { orderBy: { index: 'asc' } } },
@@ -96,57 +105,114 @@ export async function POST(req: NextRequest) {
           })),
         });
       }
-    }
+    } catch {}
 
-    // Create DB job record
-    const job = await prisma.transcriptionJob.create({
-      data: {
-        fileId:   file.id,
-        status:   'pending',
-        language: language === 'auto' ? null : language,
+    const jobId = uuidv4();
+    const projectId = file.projectId || 'default';
+
+    // Store in memory store
+    memoryStore.saveJob({
+      id:        jobId,
+      fileId:    file.id,
+      status:    'pending',
+      language:  language === 'auto' ? undefined : language,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      file: {
+        id:        file.id,
+        name:      file.name || 'audio',
+        size:      file.size || 0,
+        type:      file.mimeType || 'audio/mpeg',
+        path:      file.path,
+        projectId,
       },
     });
 
-    // Mark file as processing
-    await prisma.file.update({
-      where: { id: file.id },
-      data:  { status: 'processing' },
-    });
+    // Create DB job record if available
+    try {
+      await ensureDbInitialized();
+      await prisma.transcriptionJob.create({
+        data: {
+          id:       jobId,
+          fileId:   file.id,
+          status:   'pending',
+          language: language === 'auto' ? null : language,
+        },
+      });
+      await prisma.file.update({
+        where: { id: file.id },
+        data:  { status: 'processing' },
+      });
+    } catch {}
 
-    // ── Enqueue job with FILE PATH only (not the entire audio buffer) ──────────
-    // This fixes the critical memory/Redis exhaustion bug.
-    await addTranscriptionJob({
-      jobId:      job.id,
-      fileId:     file.id,
-      filePath:   file.path,       // ← path only; worker reads the file itself
+    const isServerless = Boolean(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.VERCEL);
+    const shouldUseQueue = !isServerless && isRedisConfigured();
+
+    if (shouldUseQueue) {
+      try {
+        await addTranscriptionJob({
+          jobId,
+          fileId:     file.id,
+          filePath:   file.path,
+          language,
+          model,
+          prompt,
+          aiProvider,
+          projectId,
+          userId:     file.project?.userId || 'anonymous',
+        });
+
+        return NextResponse.json({
+          subtitleId: jobId,
+          id:         jobId,
+          status:     'pending',
+          message:    'Transcription queued.',
+        });
+      } catch (queueErr) {
+        console.warn('[POST /api/subtitles] Queue failed, falling back to direct serverless transcription:', queueErr);
+      }
+    }
+
+    // Direct serverless transcription (Works 100% on Netlify without Redis or workers)
+    const directResult = await executeDirectTranscription({
+      jobId,
+      fileId:   file.id,
+      filePath: file.path,
       language,
       model,
       prompt,
       aiProvider,
-      projectId:  file.projectId,
-      userId:     file.project.userId,
+      projectId,
     });
 
-    return NextResponse.json({
-      subtitleId: job.id,
-      id:         job.id,
-      status:     'pending',
-      message:    'Transcription queued.',
-    });
+    if (directResult.status === 'completed') {
+      return NextResponse.json({
+        subtitleId: jobId,
+        id:         jobId,
+        status:     'completed',
+        language:   directResult.language,
+        duration:   directResult.duration,
+        srtContent: directResult.srtContent,
+        subtitles:  directResult.subtitles,
+        message:    'Transcription completed successfully.',
+      });
+    } else {
+      return NextResponse.json(
+        {
+          subtitleId: jobId,
+          id:         jobId,
+          status:     'failed',
+          error:      directResult.error || 'Transcription failed. Please check your file or AI token.',
+        },
+        { status: 500 }
+      );
+    }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unexpected error';
     console.error('[POST /api/subtitles]', message);
 
-    // Return clean messages — never expose raw stack traces or Redis details
-    if (message.includes('Queue service')) {
-      return NextResponse.json(
-        { error: 'The processing queue is not available. Please ensure the worker is running and try again.' },
-        { status: 503 }
-      );
-    }
-
     return NextResponse.json(
-      { error: 'Failed to start subtitle generation. Please try again.' },
+      { error: `Failed to start subtitle generation: ${message}` },
       { status: 500 }
     );
   }

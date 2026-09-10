@@ -15,11 +15,23 @@ export class DeepgramProvider implements STTProvider {
     options?: TranscribeOptions
   ): Promise<TranscriptResult> {
     try {
-      const response = await fetch(this.apiUrl, {
+      const params = new URLSearchParams({
+        model: 'nova-2',
+        smart_format: 'true',
+        punctuate: 'true',
+      });
+
+      if (options?.language && options.language !== 'auto') {
+        params.set('language', options.language);
+      } else {
+        params.set('detect_language', 'true');
+      }
+
+      const response = await fetch(`${this.apiUrl}?${params.toString()}`, {
         method: 'POST',
         headers: {
           'Authorization': `Token ${this.apiKey}`,
-          'Content-Type': 'audio/mp3',
+          'Content-Type': 'application/octet-stream',
         },
         body: new Uint8Array(audioBuffer),
       });
